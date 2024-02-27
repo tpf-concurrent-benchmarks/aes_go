@@ -1,8 +1,28 @@
+N_THREADS=4
 
-build:
-	cd src && go build -o ../bin/main.exe
+_common_folders:
+	mkdir -p configs/graphite
+	mkdir -p configs/grafana_config
+.PHONY: _common_folders
+
+build_image:
 	docker rmi aes_go -f || true
 	docker build -t aes_go -f ./docker/Dockerfile .
 
-run_local:
+setup: _common_folders build_image
+
+run_image:
+	docker run -it --rm --name aes_go aes_go
+
+deploy:
+	N_THREADS=$(N_THREADS) docker stack deploy -c docker/docker-compose.yml aes_go
+
+remove:
+	docker stack rm aes_go
+
+logs:
+	docker service logs aes_go_app
+
+
+local_run:
 	go run src/main.go

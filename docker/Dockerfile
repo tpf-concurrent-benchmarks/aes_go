@@ -1,9 +1,18 @@
-FROM alpine:3.12
+FROM golang:1.22 as builder
+LABEL stage=builder
 
-WORKDIR /app/
+WORKDIR /app
 
-COPY bin/main.exe /app/
+COPY ./src/ .
+RUN go mod download
+RUN go get aes_go
 
-CMD ["/app/aes_go.exe"]
+RUN CGO_ENABLED=0 GOOS=linux go build -o main.exe
 
+FROM alpine
 
+WORKDIR /app
+
+COPY --from=builder /app /app
+
+CMD ./main.exe

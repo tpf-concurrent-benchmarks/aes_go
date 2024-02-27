@@ -38,7 +38,7 @@ func sendTime(time time.Duration) {
 	statsdClient, err := statsd.NewClient(statsdDir, "aes_go")
 
 	if err != nil {
-		println("Error: ", err)
+		println("Error initializing statsd client ", err)
 		return
 	}
 

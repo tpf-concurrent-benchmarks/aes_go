@@ -1,1 +1,16 @@
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# IDEA
+.idea
+.idea_modules
+/.worksheet/
+
+# Other
+graphite/
+graphite_remote/
+
 bin
