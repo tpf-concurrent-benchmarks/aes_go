@@ -2,46 +2,60 @@ package main
 
 import (
 	aes "aes_go/aes"
-	"time"
-
-	"github.com/cactus/go-statsd-client/v5/statsd"
+	. "aes_go/components"
+	"os"
+	"sync"
 )
 
-func main() {
+func padBlock(buff []byte, n int) {
+	//fill the rest of the block with 0 (NULL)
+	for i := uint8(n); i < aes.BlockSize; i++ {
+		buff[i] = 0
+	}
+}
 
-	startTime := time.Now()
+func processFile(inputFile string, outputFile string, makeWorkers WorkerBuilder, key string, numWorkers int) {
 
-	plainText := "The quick brown fox jumps over the lazy dog. Sphinx of black quartz, judge my vow. A wizard's job is to vex chumps quickly in fog"
-	key := "0123456789abcdef"
+	buff := make([]byte, aes.BlockSize)
 
-	cipher, _ := aes.FromString(key)
+	f, err := os.Open(inputFile)
+	Check(err)
+	defer f.Close()
 
-	cipherText := cipher.CipherBlock(aes.StringToBytes(plainText))
+	workers_wg := sync.WaitGroup{}
+	inputChan := make(chan Message, numWorkers*2)
+	sink_wg := sync.WaitGroup{}
+	outputChan := make(chan Message, numWorkers*2)
 
-	decipheredText := cipher.InvCipherBlock(cipherText)
+	makeWorkers(numWorkers, &workers_wg, inputChan, outputChan, key)
+	MakeSink(&sink_wg, outputChan, outputFile)
 
-	println("Plain text: ", plainText)
-	println("Deciphered text: ", string(decipheredText[:]))
-	println("Cipher text: ", string(cipherText[:]))
-
-	endTime := time.Now()
-	elapsedTime := endTime.Sub(startTime)
-	sendTime(elapsedTime)
-
-}		
-
-func sendTime(time time.Duration) {
-	println("Time: ", time)
-
-	statsdDir := "graphite:8125"
-
-	statsdClient, err := statsd.NewClient(statsdDir, "aes_go")
-
-	if err != nil {
-		println("Error initializing statsd client ", err)
-		return
+	blockNum := uint32(0)
+	for n, err := f.Read(buff); n > 0; n, err = f.Read(buff) {
+		Check(err)
+		if uint8(n) < aes.BlockSize {
+			padBlock(buff, n)
+		}
+		plainText := aes.Block(buff)
+		inputChan <- Message{BlockNum: blockNum, Block: plainText}
+		blockNum++
 	}
 
-	statsdClient.Inc("aes_go_metric", 1, 1)
-	
+	close(inputChan)
+	workers_wg.Wait()
+	close(outputChan)
+	sink_wg.Wait()
+}
+
+func _main() {
+	cipherKey := "0123456789abcdef"
+	numWorkers := 10
+
+	processFile("input.txt", "ciphered.txt", MakeCipherWorkers, cipherKey, numWorkers)
+	processFile("ciphered.txt", "deciphered.txt", MakeInvCipherWorkers, cipherKey, numWorkers)
+	RemoveTrailingNulls("deciphered.txt")
+}
+
+func main() {
+	RunAndMeasure(_main)
 }

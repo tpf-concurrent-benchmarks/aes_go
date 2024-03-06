@@ -12,5 +12,6 @@
 # Other
 graphite/
 graphite_remote/
+src/*.txt
 
 bin

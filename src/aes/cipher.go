@@ -7,6 +7,9 @@ import (
 	"errors"
 )
 
+type Block [4 * N_B]byte
+const BlockSize = 4*N_B
+
 type AESCipher struct {
 	expandedKey key.Key
 	invExpandedKey key.Key
