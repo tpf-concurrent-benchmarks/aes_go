@@ -13,5 +13,6 @@
 graphite/
 graphite_remote/
 src/*.txt
+data/*.txt
 
 bin

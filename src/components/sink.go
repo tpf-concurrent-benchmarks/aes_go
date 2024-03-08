@@ -34,13 +34,11 @@ func sink(wg *sync.WaitGroup, cipherChan chan Message, outputFile string) {
 		}
 
 		handleBlock(message.Block, f)
-		println(nextBlock," ", message.BlockNum)
 		nextBlock++
 
 		for pending.Len() > 0 && pending.Peek().BlockNum == nextBlock {
 			message := pending.Pop()
 			handleBlock(message.Block, f)
-			println(nextBlock," ", message.BlockNum)
 			nextBlock++
 		}
 

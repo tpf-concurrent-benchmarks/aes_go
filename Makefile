@@ -23,9 +23,8 @@ remove:
 logs:
 	docker service logs aes_go_app
 
-
-# local_run:
+# cd src
 # go mod download
-# go get aes_go
-#	go run src/main.go
+#	go get aes_go
+#	go run main.go
 # diff input.txt deciphered.txt

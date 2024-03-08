@@ -3,8 +3,14 @@ package main
 import (
 	aes "aes_go/aes"
 	. "aes_go/components"
+	"io"
+	"log"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
+
+	godotenv "github.com/joho/godotenv"
 )
 
 func padBlock(buff []byte, n int) {
@@ -47,15 +53,53 @@ func processFile(inputFile string, outputFile string, makeWorkers WorkerBuilder,
 	sink_wg.Wait()
 }
 
+
 func _main() {
 	cipherKey := "0123456789abcdef"
-	numWorkers := 10
 
-	processFile("input.txt", "ciphered.txt", MakeCipherWorkers, cipherKey, numWorkers)
-	processFile("ciphered.txt", "deciphered.txt", MakeInvCipherWorkers, cipherKey, numWorkers)
-	RemoveTrailingNulls("deciphered.txt")
+	numWorkers, err := strconv.Atoi(os.Getenv("CORES"))
+	Check(err)
+
+	plainText := os.Getenv("PLAIN_TEXT")
+	encryptedText := os.Getenv("ENCRYPTED_TEXT")
+	decryptedText := os.Getenv("DECRYPTED_TEXT")
+
+	if plainText != "" && encryptedText != "" {
+		log.Println("  > Encrypting", plainText, "to", encryptedText)
+		processFile(plainText, encryptedText, MakeCipherWorkers, cipherKey, numWorkers)
+	}
+
+	if encryptedText != "" && decryptedText != "" {
+		log.Println("  > Decrypting", encryptedText, "to", decryptedText)
+		processFile(encryptedText, decryptedText, MakeInvCipherWorkers, cipherKey, numWorkers)
+		RemoveTrailingNulls(decryptedText)
+	}
+}
+
+func _loop_main() {
+	times, err := strconv.Atoi(os.Getenv("REPEAT"))
+	Check(err)
+	for i := 0; i < times; i++ {
+		log.Println("Iteration", i)
+		_main()
+	}
+}
+
+func loadEnv() {
+	err := godotenv.Load(".env")
+	Check(err)
+
+	_doLog := os.Getenv("LOG")
+	doLog := strings.ToLower(_doLog) == "true"
+
+	if doLog {
+		log.SetOutput(os.Stdout)
+	} else {
+		log.SetOutput(io.Discard)
+	}
 }
 
 func main() {
-	RunAndMeasure(_main)
+	loadEnv()
+	RunAndMeasure(_loop_main)
 }
