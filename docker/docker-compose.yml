@@ -53,7 +53,7 @@ services:
       -storage_driver_host="graphite:8125"
       -storage_driver_db="cadvisor"
       -storage_driver_buffer_duration="1m0s"
-      --enable_metrics=cpu,cpuLoad,disk,diskIO,memory,network
+      --enable_metrics=cpu,cpuLoad,memory
     depends_on:
       - graphite
     volumes:
