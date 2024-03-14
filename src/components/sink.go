@@ -2,13 +2,14 @@ package components
 
 import (
 	aes "aes_go/aes"
+	"bufio"
 	"os"
 	"sync"
 )
 
 
-func handleBlock(block aes.Block, file *os.File) {
-	_, err := file.Write(block[:aes.BlockSize])
+func handleBlock(block aes.Block, writer *bufio.Writer) {
+	_, err := writer.Write(block[:aes.BlockSize])
 	Check(err)
 }
 
@@ -17,6 +18,7 @@ func sink(wg *sync.WaitGroup, cipherChan chan Message, outputFile string) {
 	f, err := os.Create(outputFile)
 	Check(err)
 	defer f.Close()
+	writer := bufio.NewWriter(f)
 
 
 	pending := MessageHeap{}
@@ -33,12 +35,12 @@ func sink(wg *sync.WaitGroup, cipherChan chan Message, outputFile string) {
 			panic("Out of order block")
 		}
 
-		handleBlock(message.Block, f)
+		handleBlock(message.Block, writer)
 		nextBlock++
 
 		for pending.Len() > 0 && pending.Peek().BlockNum == nextBlock {
 			message := pending.Pop()
-			handleBlock(message.Block, f)
+			handleBlock(message.Block, writer)
 			nextBlock++
 		}
 

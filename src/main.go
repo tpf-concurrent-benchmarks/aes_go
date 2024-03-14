@@ -3,6 +3,7 @@ package main
 import (
 	aes "aes_go/aes"
 	. "aes_go/components"
+	"bufio"
 	"io"
 	"log"
 	"os"
@@ -27,17 +28,18 @@ func processFile(inputFile string, outputFile string, makeWorkers WorkerBuilder,
 	f, err := os.Open(inputFile)
 	Check(err)
 	defer f.Close()
-
+	reader := bufio.NewReader(f)
+	
 	workers_wg := sync.WaitGroup{}
 	inputChan := make(chan Message, numWorkers*2)
 	sink_wg := sync.WaitGroup{}
-	outputChan := make(chan Message, numWorkers*2)
+	outputChan := make(chan Message, numWorkers*10)
 
 	makeWorkers(numWorkers, &workers_wg, inputChan, outputChan, key)
 	MakeSink(&sink_wg, outputChan, outputFile)
 
 	blockNum := uint32(0)
-	for n, err := f.Read(buff); n > 0; n, err = f.Read(buff) {
+	for n, err := reader.Read(buff); n > 0; n, err = reader.Read(buff) {
 		Check(err)
 		if uint8(n) < aes.BlockSize {
 			padBlock(buff, n)
