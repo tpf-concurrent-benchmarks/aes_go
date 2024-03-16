@@ -46,6 +46,8 @@ func sink(wg *sync.WaitGroup, cipherChan chan Message, outputFile string) {
 
 	}
 
+	writer.Flush()
+
 	wg.Done()
 }
 
