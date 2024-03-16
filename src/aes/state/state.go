@@ -80,28 +80,52 @@ func (state *State) InvShiftRows() {
 	}
 }
 
+func mixColumn(col [4]byte) [4]byte {
+	a := col[0]
+	b := col[1]
+	c := col[2]
+	d := col[3]
+
+	newCol := [4]byte{
+		galoisDouble(a^b) ^ b ^ c ^ d,
+		galoisDouble(b^c) ^ c ^ d ^ a,
+		galoisDouble(c^d) ^ d ^ a ^ b,
+		galoisDouble(d^a) ^ a ^ b ^ c,
+	}
+	return newCol
+}
+
 func (state *State) MixColumns() {
 	for i := 0; i < int(N_B); i++ {
 		col := state.data.GetCol(i)
-		newCol := [4]byte{
-			galoisMul(col[0], 2) ^ galoisMul(col[1], 3) ^ col[2] ^ col[3],
-			col[0] ^ galoisMul(col[1], 2) ^ galoisMul(col[2], 3) ^ col[3],
-			col[0] ^ col[1] ^ galoisMul(col[2], 2) ^ galoisMul(col[3], 3),
-			galoisMul(col[0], 3) ^ col[1] ^ col[2] ^ galoisMul(col[3], 2),
-		}
+		newCol := mixColumn(col)
 		state.data.SetCol(i, newCol)
 	}
+}
+
+func invMixColumn(col [4]byte) [4]byte {
+	a := col[0]
+	b := col[1]
+	c := col[2]
+	d := col[3]
+
+	x := galoisDouble(a^b^c^d)
+	y := galoisDouble(x^a^c)
+	z := galoisDouble(x^b^d)
+
+	newCol := [4]byte{
+		galoisDouble(y^a^b) ^ b ^ c ^ d,
+		galoisDouble(z^b^c) ^ c ^ d ^ a,
+		galoisDouble(y^c^d) ^ d ^ a ^ b,
+		galoisDouble(z^d^a) ^ a ^ b ^ c,
+	}
+	return newCol
 }
 
 func (state *State) InvMixColumns() {
 	for i := 0; i < int(N_B); i++ {
 		col := state.data.GetCol(i)
-		newCol := [4]byte{
-			galoisMul(col[0], 14) ^ galoisMul(col[1], 11) ^ galoisMul(col[2], 13) ^ galoisMul(col[3], 9),
-			galoisMul(col[0], 9) ^ galoisMul(col[1], 14) ^ galoisMul(col[2], 11) ^ galoisMul(col[3], 13),
-			galoisMul(col[0], 13) ^ galoisMul(col[1], 9) ^ galoisMul(col[2], 14) ^ galoisMul(col[3], 11),
-			galoisMul(col[0], 11) ^ galoisMul(col[1], 13) ^ galoisMul(col[2], 9) ^ galoisMul(col[3], 14),
-		}
+		newCol := invMixColumn(col)
 		state.data.SetCol(i, newCol)
 	}
 }
@@ -121,20 +145,28 @@ func (state *State) AddRoundKey(roundKey [N_B]Word) {
 	}
 }
 
-func galoisMul(a byte, b byte) byte {
-	var result byte = 0
-	for b != 0 {
-		if b&1 != 0 {
-			result ^= a
-		}
-		if a&0x80 != 0 {
-			a = (a << 1) ^ 0x1b
-		} else {
-			a <<= 1
-		}
-		b >>= 1
+// Deprecated - all galoisMul calls were replaced optimized implementations using galoisDouble
+// func galoisMul(a byte, b byte) byte {
+// 	var result byte = 0
+// 	for b != 0 {
+// 		if b&1 != 0 {
+// 			result ^= a
+// 		}
+// 		if a&0x80 != 0 {
+// 			a = (a << 1) ^ 0x1b
+// 		} else {
+// 			a <<= 1
+// 		}
+// 		b >>= 1
+// 	}
+// 	return result
+// }
+
+func galoisDouble(a byte) byte {
+	if a&0x80 != 0 {
+		return (a << 1) ^ 0x1b
 	}
-	return result
+	return a << 1
 }
 
 func (state *State) GetRow(row int) [4]byte {
