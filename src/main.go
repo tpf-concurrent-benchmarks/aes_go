@@ -101,7 +101,10 @@ func loadEnv() {
 	}
 }
 
+
 func main() {
+	println("Starting...")
 	loadEnv()
 	RunAndMeasure(_loop_main)
+	println("Done!")
 }
