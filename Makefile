@@ -21,7 +21,7 @@ remove:
 	docker stack rm aes_go
 
 logs:
-	docker service logs aes_go_app
+	docker service logs aes_go_app -f
 
 # cd src
 # go mod download
