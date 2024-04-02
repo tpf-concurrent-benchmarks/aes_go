@@ -35,6 +35,7 @@ func _main() {
 	cipherKey := "0123456789abcdef"
 
 	numWorkers, err := strconv.Atoi(os.Getenv("CORES"))
+	println("Using", numWorkers, "goroutines")
 	Check(err)
 
 	plainText := os.Getenv("PLAIN_TEXT")
