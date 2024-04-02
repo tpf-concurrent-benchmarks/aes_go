@@ -14,40 +14,53 @@ import (
 	godotenv "github.com/joho/godotenv"
 )
 
-func padBlock(buff []byte, n int) {
-	//fill the rest of the block with 0 (NULL)
-	for i := uint8(n); i < aes.BlockSize; i++ {
+func padBatch(buff []byte, n int) {
+	for i := n; i < int(BatchSize)*int(aes.BlockSize); i++ {
 		buff[i] = 0
 	}
 }
 
-func processFile(inputFile string, outputFile string, makeWorkers WorkerBuilder, key string, numWorkers int) {
-
-	buff := make([]byte, aes.BlockSize)
-
+func sendMessages(inputFile string, inputChan chan Message) {
+	buff := make([]byte, int(BatchSize)*int(aes.BlockSize))
 	f, err := os.Open(inputFile)
 	Check(err)
 	defer f.Close()
 	reader := bufio.NewReader(f)
+
+	blockNum := uint32(0)
+	for n, err := reader.Read(buff); n > 0; n, err = reader.Read(buff) {
+		Check(err)
+
+		blockAmount := BatchSize
+		if n < int(BatchSize)*int(aes.BlockSize) {
+			padBatch(buff, n)
+			blockAmount = uint8(n) / aes.BlockSize+1
+		}
+
+		blocks := [BatchSize]aes.Block{}
+
+		for i := 0; i < n; i += int(aes.BlockSize) {
+			block := aes.Block{}
+			copy(block[:], buff[i:i+int(aes.BlockSize)])
+			blocks[i/int(aes.BlockSize)] = block
+		}
+
+		inputChan <- Message{Num: blockNum, Batch: blocks, Blocks: blockAmount}
+		blockNum++
+	}
+}
+
+func processFile(inputFile string, outputFile string, makeWorkers WorkerBuilder, key string, numWorkers int) {
 	
 	workers_wg := sync.WaitGroup{}
 	inputChan := make(chan Message, numWorkers*2)
 	sink_wg := sync.WaitGroup{}
 	outputChan := make(chan Message, numWorkers*10)
-
+	
 	makeWorkers(numWorkers, &workers_wg, inputChan, outputChan, key)
 	MakeSink(&sink_wg, outputChan, outputFile)
 
-	blockNum := uint32(0)
-	for n, err := reader.Read(buff); n > 0; n, err = reader.Read(buff) {
-		Check(err)
-		if uint8(n) < aes.BlockSize {
-			padBlock(buff, n)
-		}
-		plainText := aes.Block(buff)
-		inputChan <- Message{BlockNum: blockNum, Block: plainText}
-		blockNum++
-	}
+	sendMessages(inputFile, inputChan)
 
 	close(inputChan)
 	workers_wg.Wait()

@@ -9,7 +9,9 @@ func cipherBytes(wg *sync.WaitGroup, plainChan chan Message, cipherChan chan Mes
 	cipher, _ := aes.FromString(key)
 
 	for message := range plainChan {
-		message.Block = cipher.CipherBlock(message.Block)
+		for i, block := range message.Batch {
+			message.Batch[i] = cipher.CipherBlock(block)
+		}
 		cipherChan <- message
 	}
 
@@ -27,7 +29,9 @@ func invCipherBytes(wg *sync.WaitGroup, cipherChan chan Message, plainChan chan 
 	cipher, _ := aes.FromString(key)
 
 	for message := range cipherChan {
-		message.Block = cipher.InvCipherBlock(message.Block)
+		for i, block := range message.Batch {
+			message.Batch[i] = cipher.InvCipherBlock(block)
+		}
 		plainChan <- message
 	}
 
