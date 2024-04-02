@@ -56,6 +56,7 @@ func _main() {
 
 func _loop_main() {
 	times, err := strconv.Atoi(os.Getenv("REPEAT"))
+	println("Repeating", times, "times")
 	Check(err)
 	for i := 0; i < times; i++ {
 		log.Println("Iteration", i)
