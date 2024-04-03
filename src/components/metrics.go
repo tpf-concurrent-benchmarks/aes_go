@@ -2,7 +2,6 @@ package components
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/cactus/go-statsd-client/v5/statsd"
@@ -25,14 +24,13 @@ func sendTime(time time.Duration) {
 
 func printTime(time time.Duration) {
 
-	r := math.Round
 
 	if time.Hours() > 1 {
-		fmt.Printf("Elapsed time: %f hours\n", r(time.Hours()))
+		fmt.Printf("Elapsed time: %f hours\n", time.Hours())
 	} else if time.Minutes() > 1 {
-		fmt.Printf("Elapsed time: %f minutes\n", r(time.Minutes()))
+		fmt.Printf("Elapsed time: %f minutes\n", time.Minutes())
 	} else if time.Seconds() > 1 {
-		fmt.Printf("Elapsed time: %f seconds\n", r(time.Seconds()))
+		fmt.Printf("Elapsed time: %f seconds\n", time.Seconds())
 	} else {
 		println("Elapsed time: ", time.Milliseconds(), " milliseconds")
 	}
