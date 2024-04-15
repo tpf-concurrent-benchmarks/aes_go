@@ -4,16 +4,19 @@ import (
 	aes "aes_go/aes"
 )
 
+const BatchSize uint8= 1;
+
 type Message struct {
-	BlockNum uint32
-	Block    aes.Block
+	Num uint32
+	Batch    [BatchSize]aes.Block
+	Blocks uint8
 }
 
 type MessageHeap []Message
 
 func (h MessageHeap) Len() int           { return len(h) }
 
-func (h MessageHeap) Less(i, j int) bool { return h[i].BlockNum < h[j].BlockNum }
+func (h MessageHeap) Less(i, j int) bool { return h[i].Num < h[j].Num }
 
 func (h MessageHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
 

@@ -1,6 +1,7 @@
 package components
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cactus/go-statsd-client/v5/statsd"
@@ -17,18 +18,19 @@ func sendTime(time time.Duration) {
 		return
 	}
 
-	statsdClient.Timing("elapsed_time", time.Milliseconds(), 1)
+	statsdClient.Gauge("completion_time", time.Milliseconds(), 1)
 
 }
 
 func printTime(time time.Duration) {
 
-	if( time.Hours() > 1) {
-		println("Elapsed time: ", time.Hours(), " hours")
-	} else if( time.Minutes() > 1) {
-		println("Elapsed time: ", time.Minutes(), " minutes")
-	} else if (time.Seconds() > 1) {
-		println("Elapsed time: ", time.Seconds(), " seconds")
+
+	if time.Hours() > 1 {
+		fmt.Printf("Elapsed time: %f hours\n", time.Hours())
+	} else if time.Minutes() > 1 {
+		fmt.Printf("Elapsed time: %f minutes\n", time.Minutes())
+	} else if time.Seconds() > 1 {
+		fmt.Printf("Elapsed time: %f seconds\n", time.Seconds())
 	} else {
 		println("Elapsed time: ", time.Milliseconds(), " milliseconds")
 	}

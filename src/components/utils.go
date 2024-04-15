@@ -17,6 +17,10 @@ func _removeTrailingNulls(f *os.File) {
 	lastOffest, err := f.Seek(-int64(aes.BlockSize), os.SEEK_END)
 	Check(err)
 
+	if lastOffest < 0 {
+		return
+	}
+
 	buff := make([]byte, aes.BlockSize)
 
 	_, err = f.Read(buff)

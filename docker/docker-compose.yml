@@ -76,6 +76,8 @@ services:
     image: aes_go
     depends_on:
       - graphite
+    volumes:
+      - ../data:/app/data
     deploy:
       restart_policy:
         condition: none
