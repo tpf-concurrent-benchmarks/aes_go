@@ -34,9 +34,9 @@ adverbs = ["quickly", "lazily", "sleepily", "noisily", "hungrily",
 ]
 
 
-
-
 import random
+
+random.seed(42)
 
 def sentence():
   is_plural = random.choice([True, False])
@@ -59,10 +59,15 @@ def paragraph():
   num_sentences = random.randint(3, 7)
   return " ".join([sentence() for _ in range(num_sentences)])
 
-def text(paragraphs = 10, fileName = "input.txt"):
+def text(paragraphs = 50*10**6, max_size = 4.3*10**9, fileName = "input.txt"):
+  bytes_written = 0
   with open(fileName, "w") as file:
     for _ in range(paragraphs):
-      file.write(paragraph() + "\n\n")
+      par = paragraph() + "\n\n"
+      file.write(par)
+      bytes_written += len(par)
+      if (bytes_written > max_size):
+        break
+
       
 text()
-
