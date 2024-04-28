@@ -1,4 +1,3 @@
-N_THREADS=4
 
 _common_folders:
 	mkdir -p configs/graphite
@@ -9,13 +8,17 @@ build_image:
 	docker rmi aes_go -f || true
 	docker build -t aes_go -f ./docker/Dockerfile .
 
+dummy_file:
+	mkdir -p data
+	echo "Hello World!" > data/input.txt
+
 setup: _common_folders build_image
 
 run_image:
 	docker run -it --rm --name aes_go aes_go
 
 deploy:
-	N_THREADS=$(N_THREADS) docker stack deploy -c docker/docker-compose.yml aes_go
+	docker stack deploy -c docker/docker-compose.yml aes_go
 
 remove:
 	docker stack rm aes_go

@@ -81,8 +81,6 @@ services:
     deploy:
       restart_policy:
         condition: none
-    environment:
-      - N_THREADS=${N_THREADS}
 
 volumes:
   grafana_config:
